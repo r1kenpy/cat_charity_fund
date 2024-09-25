@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Union
 
-from sqlalchemy import select
+from sqlalchemy import select, false
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import CharityProject, Donation
@@ -9,12 +9,12 @@ from app.models import CharityProject, Donation
 
 async def get_objects_from_models(session: AsyncSession):
     projects_for_invest = await session.execute(
-        select(CharityProject).where(CharityProject.fully_invested == False)
+        select(CharityProject).where(CharityProject.fully_invested == false())
     )
     projects_for_invest = projects_for_invest.scalars().all()
 
     not_distributed_donations = await session.execute(
-        select(Donation).where(Donation.fully_invested == False)
+        select(Donation).where(Donation.fully_invested == false())
     )
     not_distributed_donations = not_distributed_donations.scalars().all()
 
