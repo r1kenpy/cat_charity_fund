@@ -4,6 +4,15 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.charity_project import project_crud
 
+PROJECT_ALREADY_EXISTS = 'Такой проект уже существует'
+NO_SUCH_PROJECT = 'Такого проекта не существует'
+CANT_DELETE_PROJECT = (
+    'Нельзя удалять закрытый проект или проект, '
+    'в который уже были инвестированы средства.'
+)
+CANNOT_UPDATE_CLOSED_PROJECT = 'Нельзя обновить закрытый проект'
+AMOUNT_CANNOT_BE_LESS_PAID = 'Сумма сбора не может быть меньше уже внесенной'
+
 
 async def check_name_duplicate(
     project_name: str,
@@ -15,7 +24,7 @@ async def check_name_duplicate(
     if project:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Такой проект уже существует',
+            detail=PROJECT_ALREADY_EXISTS,
         )
 
 
@@ -24,7 +33,7 @@ async def check_project_exists(project_id: int, session: AsyncSession) -> None:
     if not project:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Такого проекта не существует',
+            detail=NO_SUCH_PROJECT,
         )
 
 
@@ -36,10 +45,7 @@ async def check_investment_or_closed_project(
     if project.invested_amount > 0 or project.close_date is not None:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=(
-                'Нельзя удалять закрытый проект или проект, '
-                'в который уже были инвестированы средства.'
-            ),
+            detail=CANT_DELETE_PROJECT,
         )
 
 
@@ -48,7 +54,7 @@ async def check_project_closed(project_id: int, session: AsyncSession) -> None:
     if project.close_date is not None:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Нельзя обновить закрытый проект',
+            detail=CANNOT_UPDATE_CLOSED_PROJECT,
         )
 
 
@@ -59,5 +65,5 @@ async def check_investment_sum(
     if project.invested_amount > obj_data:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Сумма сбора не может быть меньше уже внесенной',
+            detail=AMOUNT_CANNOT_BE_LESS_PAID,
         )
