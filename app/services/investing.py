@@ -3,7 +3,8 @@ from typing import Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import Donation, CharityProject
+
+from app.models import CharityProject, Donation
 
 
 async def get_objects_from_models(session: AsyncSession):

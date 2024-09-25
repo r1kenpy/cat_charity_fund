@@ -2,10 +2,9 @@ from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.base import CRUDBase
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import CharityProject
 from app.schemas.charity_project import ProjectCreate, ProjectDB
 

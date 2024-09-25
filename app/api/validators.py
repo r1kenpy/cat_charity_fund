@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.crud.charity_project import project_crud
 
 PROJECT_ALREADY_EXISTS = 'Такой проект уже существует'
