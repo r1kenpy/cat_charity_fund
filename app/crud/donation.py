@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import false, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.base import CRUDBase
@@ -17,6 +17,14 @@ class CRUDDonation(CRUDBase[Donation, DonationCreate, DonationDB]):
             select(self.model).where(self.model.user_id == user.id)
         )
         return obj_in_db.scalars().all()
+
+    async def get_all_donations_for_invest(
+        self, session: AsyncSession
+    ) -> List[DonationDB]:
+        not_distributed_donations = await session.execute(
+            select(Donation).where(Donation.fully_invested == false())
+        )
+        return not_distributed_donations.scalars().all()
 
 
 donation_crud = CRUDDonation(Donation)

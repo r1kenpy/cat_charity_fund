@@ -7,7 +7,7 @@ from app.api.validators import (check_investment_or_closed_project,
 from app.core.db import get_async_session
 from app.core.user import current_superuser
 from app.crud.charity_project import project_crud
-from app.models import User
+from app.crud.donation import donation_crud
 from app.schemas.charity_project import ProjectCreate, ProjectDB, ProjectUpdate
 from app.services.investing import investing
 
@@ -27,39 +27,43 @@ GET_ALL_CHARITY_DESCRIPTION = (
 async def get_all_charity_projects(
     session: AsyncSession = Depends(get_async_session),
 ):
-    all_projects = await project_crud.get_multi(session=session)
-    return all_projects
+    return await project_crud.get_multi(session=session)
 
 
 @router.post(
     '/',
     response_model=ProjectDB,
+    dependencies=[Depends(current_superuser)],
     response_model_exclude_none=True,
 )
 async def create_charity_project(
     project_data: ProjectCreate,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_superuser),
 ):
     """Только для суперюзеров."""
 
     await check_name_duplicate(project_name=project_data.name, session=session)
     db_project = await project_crud.create(
-        session=session, obj_data=project_data
+        session=session, obj_data=project_data, commit_in_db=False
     )
-    await investing(session, db_project)
+    undistributed_donations = await donation_crud.get_all_donations_for_invest(
+        session=session
+    )
+    await investing(db_project, undistributed_donations)
+    await session.commit()
+    await session.refresh(db_project)
     return db_project
 
 
 @router.delete(
     '/{project_id}',
     response_model=ProjectDB,
+    dependencies=[Depends(current_superuser)],
     response_model_exclude_none=True,
 )
 async def delete_charity_project(
     project_id: int,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_superuser),
 ):
     """Только для суперюзеров."""
     await check_project_exists(project_id=project_id, session=session)
@@ -75,16 +79,17 @@ async def delete_charity_project(
     '/{project_id}',
     response_model=ProjectDB,
     response_model_exclude_none=True,
+    dependencies=[Depends(current_superuser)],
 )
 async def update_charity_project(
     project_id: int,
     project_new_data: ProjectUpdate,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_superuser),
 ):
     """Только для суперюзеров."""
     await check_project_exists(project_id=project_id, session=session)
     await check_project_closed(project_id=project_id, session=session)
+
     new_project_name = project_new_data.name
     if new_project_name:
         await check_name_duplicate(

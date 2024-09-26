@@ -1,11 +1,12 @@
 from typing import Generic, List, Optional, Type, TypeVar
 
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import Base
-from app.models import User
+from app.models import CharityProject, User
 
 ModelType = TypeVar('ModelType', bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
@@ -34,12 +35,37 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         session: AsyncSession,
         obj_data: CreateSchemaType,
         user: Optional[User] = None,
+        commit_in_db: bool = True,
     ) -> ModelType:
         obj_in_data = obj_data.dict(exclude_none=True)
         if user is not None:
             obj_in_data['user_id'] = user.id
         db_obj = self.model(**obj_in_data)
         session.add(db_obj)
+        if commit_in_db:
+            await session.commit()
+            await session.refresh(db_obj)
+        return db_obj
+
+    async def update(
+        self, session: AsyncSession, db_obj, obj_in
+    ) -> CharityProject:
+        obj_data = jsonable_encoder(db_obj)
+        update_obj_data = obj_in.dict(exclude_unset=True)
+        for field in obj_data:
+            if field in update_obj_data:
+                setattr(db_obj, field, update_obj_data[field])
+
+        session.add(db_obj)
         await session.commit()
         await session.refresh(db_obj)
         return db_obj
+
+    async def remove(self, session: AsyncSession, db_obj) -> CharityProject:
+        await session.delete(db_obj)
+        await session.commit()
+        return db_obj
+
+    async def commit_objets(self, session: AsyncSession, objs):
+        session.add_all(objs)
+        await session.commit()
