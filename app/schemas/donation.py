@@ -14,7 +14,7 @@ class DonationCreate(BaseModel):
     comment: Optional[str] = None
 
     class Config:
-        extra = Extra.allow
+        extra = Extra.forbid
 
 
 class DonationUser(DonationBase, DonationCreate):

@@ -46,10 +46,12 @@ async def create_charity_project(
     db_project = await project_crud.create(
         session=session, obj_data=project_data, commit_in_db=False
     )
-    undistributed_donations = await donation_crud.get_all_donations_for_invest(
-        session=session
+    session.add_all(
+        investing(
+            db_project,
+            await donation_crud.get_all_objects_for_invest(session=session),
+        ),
     )
-    await investing(db_project, undistributed_donations)
     await session.commit()
     await session.refresh(db_project)
     return db_project

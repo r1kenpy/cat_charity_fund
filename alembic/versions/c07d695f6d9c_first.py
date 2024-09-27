@@ -1,8 +1,8 @@
 """first
 
-Revision ID: e41c7fa8dfb8
+Revision ID: c07d695f6d9c
 Revises: 
-Create Date: 2024-09-26 16:31:49.426337
+Create Date: 2024-09-27 18:19:42.287186
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e41c7fa8dfb8'
+revision = 'c07d695f6d9c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -29,6 +29,7 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.CheckConstraint('full_amount >= 0'),
     sa.CheckConstraint('full_amount >= invested_amount'),
+    sa.CheckConstraint('invested_amount >= 0'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -53,6 +54,7 @@ def upgrade():
     sa.Column('comment', sa.Text(), nullable=True),
     sa.CheckConstraint('full_amount >= 0'),
     sa.CheckConstraint('full_amount >= invested_amount'),
+    sa.CheckConstraint('invested_amount >= 0'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name='fk_donation_user_id_user'),
     sa.PrimaryKeyConstraint('id')
     )

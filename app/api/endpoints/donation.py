@@ -38,10 +38,12 @@ async def create_donation(
         session=session, obj_data=donation_obj, user=user, commit_in_db=False
     )
 
-    project_for_invest = await project_crud.get_all_projects_for_invest(
-        session=session
+    session.add_all(
+        investing(
+            donation,
+            await project_crud.get_all_objects_for_invest(session=session),
+        )
     )
-    await investing(donation, project_for_invest)
     await session.commit()
     await session.refresh(donation)
     return donation

@@ -2,7 +2,7 @@ from typing import Generic, List, Optional, Type, TypeVar
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import false, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import Base
@@ -40,6 +40,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         obj_in_data = obj_data.dict(exclude_none=True)
         if user is not None:
             obj_in_data['user_id'] = user.id
+        obj_in_data['invested_amount'] = 0
         db_obj = self.model(**obj_in_data)
         session.add(db_obj)
         if commit_in_db:
@@ -66,6 +67,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await session.commit()
         return db_obj
 
-    async def commit_objets(self, session: AsyncSession, objs):
-        session.add_all(objs)
-        await session.commit()
+    async def get_all_objects_for_invest(
+        self, session: AsyncSession
+    ) -> List[ModelType]:
+        not_distributed_donations = await session.execute(
+            select(self.model).where(self.model.fully_invested == false())
+        )
+        return not_distributed_donations.scalars().all()
