@@ -1,4 +1,4 @@
-from typing import Generic, List, Optional, Type, TypeVar
+from typing import Generic, Optional, Type, TypeVar
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -26,7 +26,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         return db_obj.scalars().first()
 
-    async def get_multi(self, session: AsyncSession) -> List[ModelType]:
+    async def get_multi(self, session: AsyncSession) -> list[ModelType]:
         db_all_projects = await session.execute(select(self.model))
         return db_all_projects.scalars().all()
 
@@ -67,10 +67,15 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await session.commit()
         return db_obj
 
-    async def get_all_objects_for_invest(
-        self, session: AsyncSession
-    ) -> List[ModelType]:
-        not_distributed_donations = await session.execute(
-            select(self.model).where(self.model.fully_invested == false())
+    async def get_all_objects(self, session: AsyncSession) -> list[ModelType]:
+        return (
+            (
+                await session.execute(
+                    select(self.model).where(
+                        self.model.fully_invested == false()
+                    )
+                )
+            )
+            .scalars()
+            .all()
         )
-        return not_distributed_donations.scalars().all()

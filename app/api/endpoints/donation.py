@@ -41,7 +41,7 @@ async def create_donation(
     session.add_all(
         investing(
             donation,
-            await project_crud.get_all_objects_for_invest(session=session),
+            await project_crud.get_all_objects(session=session),
         )
     )
     await session.commit()

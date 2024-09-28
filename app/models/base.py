@@ -5,12 +5,11 @@ from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer
 from app.core.db import Base
 
 
-class AbstractProjectModelForInvest(Base):
+class AbstractModel(Base):
     __abstract__ = True
     __table_args__ = (
         CheckConstraint('full_amount >= 0'),
-        CheckConstraint('full_amount >= invested_amount'),
-        CheckConstraint('invested_amount >= 0'),
+        CheckConstraint('0 <= invested_amount <= full_amount'),
     )
 
     full_amount = Column(Integer)
@@ -21,9 +20,9 @@ class AbstractProjectModelForInvest(Base):
 
     def __repr__(self):
         return (
-            f'{self.invested_amount=};'
-            f'{self.full_amount=};'
-            f'{self.fully_invested=};'
-            f'{self.create_date=};'
+            f'{self.invested_amount=}; '
+            f'{self.full_amount=}; '
+            f'{self.fully_invested=}; '
+            f'{self.create_date=}; '
             f'{self.close_date=}.'
         )
